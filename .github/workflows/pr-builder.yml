@@ -24,13 +24,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Test
+      - name: Fetch and run dependencies
         run: |
           cd $HOME/work/homely
           mkdir src
           mkdir bin
           mkdir pkg
           export GOPATH=$HOME/work/homely
+          export GOBIN=$GOPATH/bin
+          export PATH=$GOBIN:$PATH
           mv homely src
+          go get golang.org/x/sys/unix
+          go get -u github.com/kardianos/govendor
+          cd $GOPATH/src/homely
+          govendor sync
           go test homely/...
-
