@@ -19,36 +19,41 @@ package firestoreRepo
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	"log"
-
 	firebase "firebase.google.com/go"
 	"google.golang.org/api/option"
+	"homely/models"
+	"log"
 )
 
 func newClient(ctx context.Context) *firestore.Client {
 	sa := option.WithCredentialsFile("./service-account.json")
 	app, err := firebase.NewApp(ctx, nil, sa)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	if err != nil { log.Fatalln(err) }
 	client, err := app.Firestore(ctx)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	if err != nil { log.Fatalln(err) }
 	return client
-}
-
-func newClientWithCollection(ctx context.Context, collection string) *firestore.CollectionRef {
-	client := newClient(ctx)
-	return client.Collection(collection)
 }
 
 func Get(collection string, documentId string) *firestore.DocumentSnapshot {
 	ctx := context.Background()
-	col := newClientWithCollection(ctx, collection)
+	client := newClient(ctx)
+	col := client.Collection(collection)
 	snap, err := col.Doc(documentId).Get(ctx)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	if err != nil { log.Fatalln(err) }
 	return snap
+}
+
+func Query(collection string, query models.Query) []models.EnvData {
+	ctx := context.Background()
+	client := newClient(ctx)
+	col := client.Collection(collection)
+	docRefs := col.Where(query.Field, query.Operation, query.Value).Documents(ctx)
+	docs, _ := docRefs.GetAll()
+	var res []models.EnvData
+	for _, doc := range docs {
+		var model models.EnvData
+		if err := doc.DataTo(&model); err != nil { log.Fatalln(err) }
+		res = append(res, model)
+	}
+	return res
 }

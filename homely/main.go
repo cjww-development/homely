@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"homely/models"
 	"log"
 	"net/http"
 
@@ -71,4 +72,15 @@ func main() {
 	fmt.Println(docId)
 	fmt.Println("Document data:")
 	fmt.Println(doc.Data())
+
+	query := models.Query{
+		Field:     "humidity",
+		Operation: "==",
+		Value:     0.54,
+	}
+	
+	x := firestoreRepo.Query("environment-data", query)
+	for _, data := range x {
+		data.Display()
+	}
 }
